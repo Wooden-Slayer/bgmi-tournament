@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BGMI PLAYZ - User Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            overscroll-behavior-y: contain;
+        }
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white pb-20 font-sans antialiased overflow-x-hidden">
+
+    <!-- Header -->
+    <header class="bg-gray-800 p-4 shadow-md sticky top-0 z-50 flex justify-between items-center">
+        <div class="text-xl font-bold text-blue-500 flex items-center">
+            <i class="fa-solid fa-gamepad mr-2"></i>BGMI PLAYZ
+        </div>
+        <div id="header-wallet" class="hidden bg-gray-700 px-3 py-1 rounded-full text-sm font-semibold flex items-center shadow-inner">
+            <i class="fa-solid fa-wallet text-yellow-400 mr-2"></i>
+            ₹<span id="header-balance">0.00</span>
+        </div>
+    </header>
+
+    <!-- App Wrapper -->
+    <div class="max-w-md mx-auto min-h-screen">
+
+        <!-- Page: Auth -->
+        <section id="page-auth" class="page-section active p-4 pt-10">
+            <div class="w-full p-6 bg-gray-800 rounded-lg shadow-xl border border-gray-700">
+                <div class="text-center mb-6">
+                    <h1 class="text-2xl font-bold text-blue-500">Welcome to BGMI PLAYZ</h1>
+                    <p class="text-gray-400 mt-1 text-sm">Join the Ultimate Tournaments</p>
+                </div>
+                <div id="auth-alert" class="hidden p-3 rounded mb-4 text-center text-sm font-bold"></div>
+                
+                <!-- Tab Headings -->
+                <div class="flex border-b border-gray-700 mb-6 text-sm">
+                    <button id="btn-tab-login" onclick="switchAuthTab('login')" class="w-1/2 py-2 text-center border-b-2 border-blue-500 text-blue-500 font-semibold">User Login</button>
+                    <button id="btn-tab-signup" onclick="switchAuthTab('signup')" class="w-1/2 py-2 text-center border-b-2 border-transparent text-gray-400 font-semibold">Sign Up</button>
+                </div>
+
+                <!-- User Login Form -->
+                <form id="form-user-login" onsubmit="handleUserLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Username</label>
+                        <input type="text" id="login-username" required class="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Password</label>
+                        <input type="password" id="login-password" required class="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded transition">Login</button>
+                </form>
+
+                <!-- User Signup Form -->
+                <form id="form-user-signup" onsubmit="handleUserSignup(event)" class="space-y-4 hidden">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Username</label>
+                        <input type="text" id="signup-username" required class="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Email</label>
+                        <input type="email" id="signup-email" required class="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Password</label>
+                        <input type="password" id="signup-password" required class="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded transition">Sign Up</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Page: Home -->
+        <section id="page-home" class="page-section p-4">
+            <h2 class="text-xl font-bold mb-4 text-gray-200">Upcoming Tournaments</h2>
+            <div id="home-alerts"></div>
+            <div id="tournaments-grid" class="space-y-4"></div>
+        </section>
+
+        <!-- Page: My Matches -->
+        <section id="page-matches" class="page-section p-4">
+            <div class="flex border-b border-gray-700 mb-4 text-sm">
+                <button onclick="toggleMyMatchesTab('active')" id="btn-matches-active" class="w-1/2 py-2 text-center border-b-2 border-blue-500 text-blue-500 font-semibold">Active / Upcoming</button>
+                <button onclick="toggleMyMatchesTab('completed')" id="btn-matches-completed" class="w-1/2 py-2 text-center border-b-2 border-transparent text-gray-400 font-semibold">Completed</button>
+            </div>
+            <div id="my-matches-container" class="space-y-4"></div>
+        </section>
+
+        <!-- Page: Wallet -->
+        <section id="page-wallet" class="page-section p-4">
+            <div id="wallet-alerts"></div>
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 shadow-xl mb-6 text-center">
+                <p class="text-blue-100 mb-1">Total Balance</p>
+                <h1 class="text-4xl font-bold text-white mb-6">₹<span id="wallet-balance-display">0.00</span></h1>
+                <div class="flex justify-center space-x-4">
+                    <button onclick="openModal('modal-deposit')" class="bg-white text-blue-600 px-8 py-2.5 rounded-full font-bold shadow-lg transition">Add</button>
+                    <button onclick="openModal('modal-withdraw')" class="bg-blue-800 text-white px-8 py-2.5 rounded-full font-bold shadow-lg border border-blue-500 transition">Withdraw</button>
+                </div>
+            </div>
+            <h2 class="text-lg font-bold text-gray-200 mb-3">Recent Transactions</h2>
+            <div id="transactions-list" class="bg-gray-800 rounded-xl overflow-hidden border border-gray-700"></div>
+        </section>
+
+        <!-- Page: Profile -->
+        <section id="page-profile" class="page-section p-4 space-y-6">
+            <div id="profile-alerts"></div>
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 text-center">
+                <div class="w-20 h-20 bg-blue-600 rounded-full mx-auto flex items-center justify-center text-3xl font-bold text-white mb-3 shadow">
+                    <span id="profile-avatar-letter">U</span>
+                </div>
+                <h2 id="profile-username" class="text-xl font-bold text-white">---</h2>
+                <p id="profile-email-text" class="text-gray-400 text-sm">---</p>
+            </div>
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
+                <h3 class="text-md font-bold text-white mb-4 border-b border-gray-700 pb-2">Edit Profile</h3>
+                <form onsubmit="handleProfileUpdate(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Email Address</label>
+                        <input type="email" id="edit-email" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white text-sm focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Your UPI ID (For Withdrawals)</label>
+                        <input type="text" id="edit-upi" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white text-sm focus:outline-none">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded text-sm transition">Update Details</button>
+                </form>
+            </div>
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
+                <h3 class="text-md font-bold text-white mb-4 border-b border-gray-700 pb-2">Change Password</h3>
+                <form onsubmit="handlePasswordUpdate(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">New Password</label>
+                        <input type="password" id="edit-password" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white text-sm focus:outline-none">
+                    </div>
+                    <button type="submit" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 rounded text-sm transition">Change Password</button>
+                </form>
+            </div>
+            <button onclick="logoutUser()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition shadow-lg">
+                <i class="fa-solid fa-power-off mr-2"></i> Logout
+            </button>
+        </section>
+
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-deposit" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-[100] px-4">
+        <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-sm border border-gray-700 relative">
+            <button onclick="closeModal('modal-deposit')" class="absolute top-4 right-4 text-gray-400"><i class="fa-solid fa-times text-xl"></i></button>
+            <h3 class="text-xl font-bold text-white mb-4 text-center">Deposit Money</h3>
+            <div class="text-center mb-5 bg-gray-900 p-4 rounded-xl border border-gray-700">
+                <p class="text-xs text-gray-400 mb-3 uppercase tracking-wider font-bold">1. Pay to UPI QR Code</p>
+                <img id="user-deposit-qr" src="qr.png" class="w-40 h-40 mx-auto rounded-lg mb-3 border border-gray-600 bg-white p-1">
+                <p class="text-xs text-gray-400">UPI ID:</p>
+                <p id="user-deposit-upi" class="font-bold text-yellow-400 text-lg select-all bg-gray-800 py-1 px-3 rounded inline-block mt-1">---</p>
+            </div>
+            <form onsubmit="handleUserSubmitDeposit(event)">
+                <div class="mb-3">
+                    <label class="block text-xs text-gray-400 mb-1">Amount Paid (₹)</label>
+                    <input type="number" id="deposit-amount" required min="10" placeholder="e.g., 100" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:outline-none">
+                </div>
+                <div class="mb-5">
+                    <label class="block text-xs text-gray-400 mb-1">12-Digit Transaction ID (UTR)</label>
+                    <input type="text" id="deposit-utr" required placeholder="Enter UTR reference" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:outline-none">
+                </div>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg transition">Submit Request</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-withdraw" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-[100] px-4">
+        <div class="bg-gray-800 p-6 rounded-2xl w-full max-w-sm border border-gray-700 relative">
+            <button onclick="closeModal('modal-withdraw')" class="absolute top-4 right-4 text-gray-400"><i class="fa-solid fa-times text-xl"></i></button>
+            <h3 class="text-xl font-bold text-white mb-2 text-center">Withdrawal Money</h3>
+            <p class="text-center text-xs text-gray-400 mb-5">Available: ₹<span id="withdraw-max-balance">0.00</span></p>
+            <form onsubmit="handleUserSubmitWithdrawal(event)">
+                <div class="mb-4">
+                    <label class="block text-xs text-gray-400 mb-1">Amount (₹)</label>
+                    <input type="number" id="withdraw-amount" required min="10" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:outline-none">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-xs text-gray-400 mb-1">Receiver UPI ID</label>
+                    <input type="text" id="withdraw-upi" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:outline-none">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg">Request Withdrawal</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav id="nav-user-bar" class="hidden bg-gray-800 fixed bottom-0 left-0 right-0 border-t border-gray-700 z-50">
+        <div class="flex justify-around items-center h-16 text-xs font-medium text-gray-400 max-w-md mx-auto">
+            <button onclick="showPage('page-home')" id="nav-btn-home" class="flex flex-col items-center w-full">
+                <i class="fa-solid fa-house text-xl mb-1"></i><span>Home</span>
+            </button>
+            <button onclick="showPage('page-matches')" id="nav-btn-matches" class="flex flex-col items-center w-full">
+                <i class="fa-solid fa-trophy text-xl mb-1"></i><span>My Matches</span>
+            </button>
+            <button onclick="showPage('page-wallet')" id="nav-btn-wallet" class="flex flex-col items-center w-full">
+                <i class="fa-solid fa-wallet text-xl mb-1"></i><span>Wallet</span>
+            </button>
+            <button onclick="showPage('page-profile')" id="nav-btn-profile" class="flex flex-col items-center w-full">
+                <i class="fa-solid fa-user text-xl mb-1"></i><span>Profile</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        const DEFAULT_TOURNAMENTS = [
+            { id: 101, title: "BGMI Erangel Master Series", game_name: "BGMI", entry_fee: 10, prize_pool: 250, match_time: "2025-06-12T18:30", max_participants: 100, room_id: "", room_password: "", status: "Upcoming", winner_id: null },
+            { id: 102, title: "BGMI Sanhok Blitz Cup", game_name: "BGMI", entry_fee: 25, prize_pool: 600, match_time: "2025-06-15T20:00", max_participants: 100, room_id: "", room_password: "", status: "Upcoming", winner_id: null }
+        ];
+
+        function initDB() {
+            if (!localStorage.getItem("users")) {
+                localStorage.setItem("users", JSON.stringify([
+                    { id: 201, username: "player1", email: "player1@test.com", password: "password123", wallet_balance: 100.00, status: "Active", upi_id: "player1@ybl" }
+                ]));
+            }
+            if (!localStorage.getItem("tournaments")) localStorage.setItem("tournaments", JSON.stringify(DEFAULT_TOURNAMENTS));
+            if (!localStorage.getItem("participants")) localStorage.setItem("participants", JSON.stringify([]));
+            if (!localStorage.getItem("transactions")) localStorage.setItem("transactions", JSON.stringify([]));
+            if (!localStorage.getItem("deposits")) localStorage.setItem("deposits", JSON.stringify([]));
+            if (!localStorage.getItem("withdrawals")) localStorage.setItem("withdrawals", JSON.stringify([]));
+            
+            // Forces resetting any generated API URL config inside memory to use local file "qr.png"
+            let settings = localStorage.getItem("app_settings");
+            if (settings) {
+                let parsed = JSON.parse(settings);
+                if (!parsed.qr_code || parsed.qr_code.includes("qrserver.com") || parsed.qr_code.includes("placeholder") || parsed.qr_code.includes("AccountQRCodeState")) {
+                    parsed.qr_code = "qr.png";
+                    localStorage.setItem("app_settings", JSON.stringify(parsed));
+                }
+            } else {
+                localStorage.setItem("app_settings", JSON.stringify({
+                    admin_upi: "payzadmin@upi",
+                    qr_code: "qr.png"
+                }));
+            }
+        }
+        initDB();
+
+        const db = {
+            get: (k) => JSON.parse(localStorage.getItem(k)),
+            set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+        };
+
+        let currentUser = null;
+        let myMatchesCurrentTab = "active";
+
+        function checkSession() {
+            const uid = sessionStorage.getItem("user_id");
+            if (uid) {
+                const matched = db.get("users").find(u => u.id == uid);
+                if (matched && matched.status !== "Blocked") {
+                    currentUser = matched;
+                    showPage("page-home");
+                } else {
+                    logoutUser();
+                }
+            } else {
+                showPage("page-auth");
+            }
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll(".page-section").forEach(s => s.classList.remove("active"));
+            document.getElementById(pageId).classList.add("active");
+
+            const headerWallet = document.getElementById("header-wallet");
+            const navBar = document.getElementById("nav-user-bar");
+            headerWallet.classList.add("hidden");
+            navBar.classList.add("hidden");
+
+            if (pageId.startsWith("page-user-") || pageId !== "page-auth") {
+                headerWallet.classList.remove("hidden");
+                navBar.classList.remove("hidden");
+                updateHeaderBalance();
+                updateNavIcons(pageId);
+
+                if (pageId === "page-home") renderUserHome();
+                if (pageId === "page-matches") renderUserMatches();
+                if (pageId === "page-wallet") renderUserWallet();
+                if (pageId === "page-profile") renderUserProfile();
+            }
+        }
+
+        function updateHeaderBalance() {
+            const user = db.get("users").find(u => u.id === currentUser.id);
+            document.getElementById("header-balance").innerText = parseFloat(user.wallet_balance).toFixed(2);
+        }
+
+        function updateNavIcons(pageId) {
+            document.getElementById("nav-btn-home").className = `flex flex-col items-center w-full ${pageId === 'page-home' ? 'text-blue-500' : 'text-gray-400'}`;
+            document.getElementById("nav-btn-matches").className = `flex flex-col items-center w-full ${pageId === 'page-matches' ? 'text-blue-500' : 'text-gray-400'}`;
+            document.getElementById("nav-btn-wallet").className = `flex flex-col items-center w-full ${pageId === 'page-wallet' ? 'text-blue-500' : 'text-gray-400'}`;
+            document.getElementById("nav-btn-profile").className = `flex flex-col items-center w-full ${pageId === 'page-profile' ? 'text-blue-500' : 'text-gray-400'}`;
+        }
+
+        function switchAuthTab(tab) {
+            document.getElementById("form-user-login").classList.add("hidden");
+            document.getElementById("form-user-signup").classList.add("hidden");
+            document.getElementById("btn-tab-login").className = "w-1/2 py-2 text-center border-b-2 border-transparent text-gray-400 font-semibold";
+            document.getElementById("btn-tab-signup").className = "w-1/2 py-2 text-center border-b-2 border-transparent text-gray-400 font-semibold";
+
+            if (tab === "login") {
+                document.getElementById("form-user-login").classList.remove("hidden");
+                document.getElementById("btn-tab-login").className = "w-1/2 py-2 text-center border-b-2 border-blue-500 text-blue-500 font-semibold";
+            } else {
+                document.getElementById("form-user-signup").classList.remove("hidden");
+                document.getElementById("btn-tab-signup").className = "w-1/2 py-2 text-center border-b-2 border-blue-500 text-blue-500 font-semibold";
+            }
+        }
+
+        function handleUserLogin(e) {
+            e.preventDefault();
+            const user = db.get("users").find(u => u.username === document.getElementById("login-username").value.trim());
+            if (user && user.password === document.getElementById("login-password").value) {
+                if (user.status === "Blocked") {
+                    alert("This account is blocked.");
+                    return;
+                }
+                sessionStorage.setItem("user_id", user.id);
+                currentUser = user;
+                showPage("page-home");
+            } else {
+                alert("Incorrect credentials.");
+            }
+        }
+
+        function handleUserSignup(e) {
+            e.preventDefault();
+            const users = db.get("users");
+            const username = document.getElementById("signup-username").value.trim();
+            const email = document.getElementById("signup-email").value.trim();
+            const password = document.getElementById("signup-password").value;
+
+            if (users.find(u => u.username === username || u.email === email)) {
+                alert("Username or Email already exists.");
+                return;
+            }
+
+            users.push({ id: Date.now(), username, email, password, wallet_balance: 0.0, status: "Active", upi_id: "" });
+            db.set("users", users);
+            alert("Registration successful!");
+            switchAuthTab("login");
+        }
+
+        function renderUserHome() {
+            const tournaments = db.get("tournaments").filter(t => t.status === "Upcoming" || t.status === "Live");
+            const participants = db.get("participants");
+            const container = document.getElementById("tournaments-grid");
+            container.innerHTML = "";
+
+            tournaments.forEach(t => {
+                const joined = participants.filter(p => p.tournament_id === t.id);
+                const registered = joined.some(p => p.user_id === currentUser.id);
+                let btn = "";
+
+                if (registered) {
+                    btn = `<button disabled class="w-full bg-green-700 text-white font-bold py-2 rounded text-sm cursor-not-allowed">Registered</button>`;
+                } else {
+                    btn = `<button onclick="joinTournament(${t.id})" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded text-sm transition">Join Match (₹${t.entry_fee})</button>`;
+                }
+
+                container.innerHTML += `
+                    <div class="bg-gray-800 rounded-xl overflow-hidden border border-gray-700">
+                        <div class="bg-gray-700 p-3 flex justify-between items-center">
+                            <span class="font-bold text-sm">${t.game_name}</span>
+                            <span class="text-[10px] bg-blue-500 text-white px-2 py-0.5 rounded font-bold">${t.status}</span>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="text-md font-bold text-gray-100 mb-2">${t.title}</h3>
+                            <div class="flex justify-between bg-gray-900 p-3 rounded-lg mb-4 text-center">
+                                <div class="flex-1"><p class="text-[10px] text-gray-400">Entry</p><p class="font-bold text-yellow-400">₹${t.entry_fee}</p></div>
+                                <div class="flex-1 border-l border-gray-700"><p class="text-[10px] text-gray-400">Prizes</p><p class="font-bold text-green-400">₹${t.prize_pool}</p></div>
+                            </div>
+                            ${btn}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function joinTournament(id) {
+            const users = db.get("users");
+            const uIdx = users.findIndex(u => u.id === currentUser.id);
+            const user = users[uIdx];
+            const t = db.get("tournaments").find(x => x.id === id);
+
+            if (user.wallet_balance < t.entry_fee) {
+                alert("Insufficient wallet balance.");
+                return;
+            }
+
+            user.wallet_balance -= t.entry_fee;
+            db.set("users", users);
+
+            const participants = db.get("participants");
+            participants.push({ id: Date.now(), user_id: user.id, tournament_id: t.id });
+            db.set("participants", participants);
+
+            const txs = db.get("transactions");
+            txs.push({ id: Date.now(), user_id: user.id, amount: t.entry_fee, type: "debit", description: `Joined Tournament #${t.id}`, created_at: new Date().toISOString() });
+            db.set("transactions", txs);
+
+            alert("Successfully registered!");
+            updateHeaderBalance();
+            renderUserHome();
+        }
+
+        function toggleMyMatchesTab(tab) {
+            myMatchesCurrentTab = tab;
+            document.getElementById("btn-matches-active").className = `w-1/2 py-2 text-center border-b-2 text-sm font-semibold ${tab === 'active' ? 'border-blue-500 text-blue-500' : 'border-transparent text-gray-400'}`;
+            document.getElementById("btn-matches-completed").className = `w-1/2 py-2 text-center border-b-2 text-sm font-semibold ${tab === 'completed' ? 'border-blue-500 text-blue-500' : 'border-transparent text-gray-400'}`;
+            renderUserMatches();
+        }
+
+        function renderUserMatches() {
+            const container = document.getElementById("my-matches-container");
+            container.innerHTML = "";
+            const participants = db.get("participants").filter(p => p.user_id === currentUser.id);
+            const tournaments = db.get("tournaments");
+
+            participants.forEach(p => {
+                const t = tournaments.find(x => x.id === p.tournament_id);
+                if (!t) return;
+                const isCompleted = t.status === "Completed";
+
+                if ((myMatchesCurrentTab === "active" && !isCompleted) || (myMatchesCurrentTab === "completed" && isCompleted)) {
+                    let details = "";
+                    if (t.status === "Live" && t.room_id) {
+                        details = `<div class="bg-gray-900 p-3 rounded text-xs">Room ID: ${t.room_id} | Pass: ${t.room_password}</div>`;
+                    } else if (isCompleted) {
+                        details = `<div class="p-2 rounded text-center text-xs ${t.winner_id === currentUser.id ? 'bg-green-500/20 text-green-500' : 'bg-gray-700'}">Winner declared</div>`;
+                    } else {
+                        details = `<div class="bg-gray-900 p-2 rounded text-xs text-center text-gray-400">Match credentials shared when Live</div>`;
+                    }
+
+                    container.innerHTML += `
+                        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                            <h3 class="font-bold text-sm mb-1">${t.title}</h3>
+                            <p class="text-[10px] text-gray-400 mb-2">${new Date(t.match_time).toLocaleString()}</p>
+                            ${details}
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function renderUserWallet() {
+            const user = db.get("users").find(u => u.id === currentUser.id);
+            document.getElementById("wallet-balance-display").innerText = parseFloat(user.wallet_balance).toFixed(2);
+            document.getElementById("withdraw-max-balance").innerText = parseFloat(user.wallet_balance).toFixed(2);
+
+            const settings = db.get("app_settings") || {};
+            document.getElementById("user-deposit-upi").innerText = settings.admin_upi || "payzadmin@upi";
+            document.getElementById("user-deposit-qr").src = settings.qr_code || "qr.png";
+
+            const txs = db.get("transactions").filter(t => t.user_id === currentUser.id);
+            const list = document.getElementById("transactions-list");
+            list.innerHTML = "";
+
+            txs.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).forEach(tx => {
+                const credit = tx.type === "credit";
+                list.innerHTML += `
+                    <div class="flex justify-between items-center p-3 border-b border-gray-700 last:border-0 text-xs">
+                        <div><p class="font-semibold">${tx.description}</p><p class="text-[9px] text-gray-400">${new Date(tx.created_at).toLocaleDateString()}</p></div>
+                        <span class="font-bold ${credit ? 'text-green-500' : 'text-red-500'}">${credit ? '+' : '-'}₹${tx.amount}</span>
+                    </div>
+                `;
+            });
+        }
+
+        function handleUserSubmitDeposit(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById("deposit-amount").value);
+            const utr = document.getElementById("deposit-utr").value.trim();
+
+            const deposits = db.get("deposits");
+            deposits.push({ id: Date.now(), user_id: currentUser.id, amount, transaction_id: utr, status: "Pending", created_at: new Date().toISOString() });
+            db.set("deposits", deposits);
+
+            closeModal("modal-deposit");
+            alert("Deposit request submitted.");
+            renderUserWallet();
+        }
+
+        function handleUserSubmitWithdrawal(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById("withdraw-amount").value);
+            const upi = document.getElementById("withdraw-upi").value.trim();
+
+            const users = db.get("users");
+            const uIdx = users.findIndex(u => u.id === currentUser.id);
+            const user = users[uIdx];
+
+            if (user.wallet_balance < amount) {
+                alert("Insufficient funds.");
+                return;
+            }
+
+            user.wallet_balance -= amount;
+            user.upi_id = upi;
+            db.set("users", users);
+
+            const withdrawals = db.get("withdrawals");
+            withdrawals.push({ id: Date.now(), user_id: currentUser.id, amount, status: "Pending", created_at: new Date().toISOString() });
+            db.set("withdrawals", withdrawals);
+
+            const txs = db.get("transactions");
+            txs.push({ id: Date.now(), user_id: currentUser.id, amount, type: "debit", description: "Withdrawal Request (Pending)", created_at: new Date().toISOString() });
+            db.set("transactions", txs);
+
+            closeModal("modal-withdraw");
+            alert("Withdrawal request submitted.");
+            updateHeaderBalance();
+            renderUserWallet();
+        }
+
+        function renderUserProfile() {
+            const user = db.get("users").find(u => u.id === currentUser.id);
+            document.getElementById("profile-avatar-letter").innerText = user.username.charAt(0).toUpperCase();
+            document.getElementById("profile-username").innerText = user.username;
+            document.getElementById("profile-email-text").innerText = user.email;
+            document.getElementById("edit-email").value = user.email;
+            document.getElementById("edit-upi").value = user.upi_id || "";
+        }
+
+        function handleProfileUpdate(e) {
+            e.preventDefault();
+            const users = db.get("users");
+            const idx = users.findIndex(u => u.id === currentUser.id);
+            users[idx].email = document.getElementById("edit-email").value.trim();
+            users[idx].upi_id = document.getElementById("edit-upi").value.trim();
+            db.set("users", users);
+            alert("Profile updated.");
+            renderUserProfile();
+        }
+
+        function handlePasswordUpdate(e) {
+            e.preventDefault();
+            const users = db.get("users");
+            const idx = users.findIndex(u => u.id === currentUser.id);
+            users[idx].password = document.getElementById("edit-password").value;
+            db.set("users", users);
+            alert("Password changed.");
+            document.getElementById("edit-password").value = "";
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove("hidden"); }
+        function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
+
+        function logoutUser() {
+            sessionStorage.removeItem("user_id");
+            currentUser = null;
+            showPage("page-auth");
+        }
+
+        window.onload = checkSession;
+    </script>
+</body>
+</html>
