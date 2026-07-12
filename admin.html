@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BGMI PLAYZ - Admin Console</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            overscroll-behavior-y: contain;
+        }
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white pb-20 font-sans antialiased overflow-x-hidden">
+
+    <!-- Header -->
+    <header class="bg-gray-800 p-4 shadow-md sticky top-0 z-50 flex justify-between items-center">
+        <div class="text-xl font-bold text-red-500 flex items-center">
+            <i class="fa-solid fa-user-shield mr-2"></i>Admin Panel
+        </div>
+        <span id="admin-badge" class="hidden text-xs bg-red-600/20 text-red-400 px-3 py-1 rounded-full font-bold">Vikash</span>
+    </header>
+
+    <!-- App Wrapper -->
+    <div class="max-w-md mx-auto min-h-screen">
+
+        <!-- Page: Auth -->
+        <section id="page-admin-auth" class="page-section active p-4 pt-10">
+            <div class="w-full p-6 bg-gray-800 rounded-lg shadow-xl border-t-4 border-red-500">
+                <div class="text-center mb-6">
+                    <h1 class="text-2xl font-bold text-red-500"><i class="fa-solid fa-user-shield"></i> Admin Panel</h1>
+                    <p class="text-gray-400 mt-2 text-sm">Sign in to manage BGMI PLAYZ</p>
+                </div>
+                <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Username</label>
+                        <input type="text" id="admin-username" required class="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Password</label>
+                        <input type="password" id="admin-password" required class="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white focus:outline-none">
+                    </div>
+                    <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded transition">Login</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Page: Dashboard -->
+        <section id="page-dashboard" class="page-section p-4 space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold text-gray-100">Dashboard</h2>
+                <button onclick="openCreateMatch()" class="bg-red-600 px-4 py-2 rounded text-xs font-bold"><i class="fa-solid fa-plus mr-1"></i> New Match</button>
+            </div>
+
+            <!-- Transaction Queues -->
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <button onclick="showPage('page-admin-deposits')" class="bg-gray-800 border border-gray-700 rounded-lg p-3 flex justify-between items-center hover:bg-gray-700 transition">
+                    <span class="text-green-500 font-bold text-xs"><i class="fa-solid fa-arrow-down mr-1"></i> Deposits</span>
+                    <span id="badge-deposits" class="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full hidden">0</span>
+                </button>
+                <button onclick="showPage('page-admin-withdrawals')" class="bg-gray-800 border border-gray-700 rounded-lg p-3 flex justify-between items-center hover:bg-gray-700 transition">
+                    <span class="text-blue-500 font-bold text-xs"><i class="fa-solid fa-arrow-up mr-1"></i> Withdraws</span>
+                    <span id="badge-withdrawals" class="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full hidden">0</span>
+                </button>
+            </div>
+
+            <!-- Dashboard Statistics -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 text-center">
+                    <i class="fa-solid fa-users text-2xl text-blue-500 mb-2"></i>
+                    <p class="text-xs text-gray-400">Total Users</p>
+                    <p id="stat-users" class="text-lg font-bold">0</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 text-center">
+                    <i class="fa-solid fa-gamepad text-2xl text-purple-500 mb-2"></i>
+                    <p class="text-xs text-gray-400">Tournaments</p>
+                    <p id="stat-tournaments" class="text-lg font-bold">0</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 text-center">
+                    <i class="fa-solid fa-gift text-2xl text-green-500 mb-2"></i>
+                    <p class="text-xs text-gray-400">Prize Distributed</p>
+                    <p id="stat-prize" class="text-lg font-bold">₹0.00</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 text-center">
+                    <i class="fa-solid fa-chart-pie text-2xl text-yellow-500 mb-2"></i>
+                    <p class="text-xs text-gray-400">Total Revenue</p>
+                    <p id="stat-revenue" class="text-lg font-bold">₹0.00</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Page: Tournaments Management -->
+        <section id="page-tournaments" class="page-section p-4 space-y-4">
+            <h2 class="text-xl font-bold text-gray-100">All Tournaments</h2>
+            <div id="admin-tournaments-grid" class="space-y-4"></div>
+        </section>
+
+        <!-- Subpage: Create Match -->
+        <section id="page-match-create" class="page-section p-4 space-y-4">
+            <div class="flex items-center space-x-2">
+                <button onclick="showPage('page-dashboard')" class="text-red-500"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                <h2 class="text-xl font-bold">Create Tournament</h2>
+            </div>
+            <div class="bg-gray-800 rounded-xl p-5 border border-gray-700">
+                <form onsubmit="handleCreateTournament(event)" class="space-y-4 text-sm">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Tournament Title</label>
+                        <input type="text" id="create-title" required placeholder="e.g. BGMI Erangel" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Game Platform</label>
+                        <input type="text" id="create-game" required placeholder="e.g. BGMI" class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                    </div>
+                    <div class="flex space-x-3">
+                        <div class="flex-1">
+                            <label class="block text-xs text-gray-400 mb-1">Entry Fee (₹)</label>
+                            <input type="number" id="create-fee" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-xs text-gray-400 mb-1">Prize Pool (₹)</label>
+                            <input type="number" id="create-prize" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <div class="flex-1">
+                            <label class="block text-xs text-gray-400 mb-1">Match Time</label>
+                            <input type="datetime-local" id="create-time" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-xs text-gray-400 mb-1">Max Players</label>
+                            <input type="number" id="create-max" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded transition shadow-lg">Publish Match</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Subpage: Manage Individual Tournament -->
+        <section id="page-match-manage" class="page-section p-4 space-y-4">
+            <button onclick="showPage('page-tournaments')" class="text-red-500"><i class="fa-solid fa-arrow-left"></i> Back</button>
+            <div class="bg-gray-800 rounded-xl p-5 border border-gray-700 space-y-4">
+                <h2 id="manage-t-title" class="text-lg font-bold text-white">---</h2>
+                <p class="text-xs text-gray-400">Match Status: <span id="manage-t-status" class="font-bold text-white">Upcoming</span></p>
+                
+                <form id="form-manage-room" onsubmit="handleUpdateRoom(event)" class="space-y-4 border-t border-gray-700 pt-4">
+                    <h3 class="text-xs font-bold text-gray-300">Set Credentials to Live</h3>
+                    <div class="flex space-x-2">
+                        <input type="text" id="manage-room-id" placeholder="Room ID" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-xs">
+                        <input type="text" id="manage-room-pass" placeholder="Password" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-xs">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-xs font-bold py-2 rounded">Activate Match & Share</button>
+                </form>
+
+                <form id="form-manage-winner" onsubmit="handleDeclareWinner(event)" class="space-y-4 border-t border-gray-700 pt-4">
+                    <h3 class="text-xs font-bold text-gray-300">Declare Winner</h3>
+                    <select id="manage-winner-select" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-xs text-white">
+                        <option value="">Select Winner</option>
+                    </select>
+                    <button type="submit" class="w-full bg-green-600 text-xs font-bold py-2 rounded">Complete Match & Distribute Prize</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Subpage: Deposits -->
+        <section id="page-admin-deposits" class="page-section p-4 space-y-4">
+            <button onclick="showPage('page-dashboard')" class="text-red-500"><i class="fa-solid fa-arrow-left"></i> Back</button>
+            <h2 class="text-xl font-bold">Deposit Processing</h2>
+            <div id="admin-deposits-list" class="space-y-4"></div>
+        </section>
+
+        <!-- Subpage: Withdrawals -->
+        <section id="page-admin-withdrawals" class="page-section p-4 space-y-4">
+            <button onclick="showPage('page-dashboard')" class="text-red-500"><i class="fa-solid fa-arrow-left"></i> Back</button>
+            <h2 class="text-xl font-bold">Withdrawal Processing</h2>
+            <div id="admin-withdrawals-list" class="space-y-4"></div>
+        </section>
+
+        <!-- Page: Users -->
+        <section id="page-users" class="page-section p-4 space-y-4">
+            <h2 class="text-xl font-bold text-gray-100">Manage Users</h2>
+            <div id="admin-users-list" class="space-y-3"></div>
+        </section>
+
+        <!-- Page: Settings (Exact layout matching the requested screenshot) -->
+        <section id="page-settings" class="page-section p-4 space-y-6">
+            
+            <!-- ADMIN SETTINGS CARD (Match Screenshot layout) -->
+            <div class="bg-gray-800 rounded-xl p-5 shadow border border-gray-700">
+                <h3 class="text-lg font-bold text-white mb-4 border-b border-gray-700 pb-2">Admin Settings</h3>
+                <form onsubmit="handleSaveAdminAccount(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Admin Username</label>
+                        <input type="text" id="admin-set-username" value="Vikash" required class="w-full bg-gray-700 border border-gray-600 rounded p-2.5 text-white focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">New Password (leave blank to keep current)</label>
+                        <input type="password" id="admin-set-password" class="w-full bg-gray-700 border border-gray-600 rounded p-2.5 text-white focus:outline-none">
+                    </div>
+                    <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded transition">Save Settings</button>
+                </form>
+            </div>
+
+            <!-- LOGOUT CONTAINER (Match Screenshot layout) -->
+            <button onclick="logoutAdmin()" class="w-full bg-gray-800 border border-gray-700 hover:bg-gray-700 text-white font-semibold py-3 rounded-xl transition flex justify-center items-center">
+                <i class="fa-solid fa-power-off mr-2 text-red-500"></i> Logout Admin
+            </button>
+
+            <!-- GATEWAY CONFIGURATION CARD -->
+            <div class="bg-gray-800 rounded-xl p-5 border border-gray-700 space-y-4">
+                <h3 class="text-md font-bold text-white border-b border-gray-700 pb-2"><i class="fa-solid fa-qrcode mr-1"></i> Payment Gateways</h3>
+                <form onsubmit="handleSaveGateway(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Admin UPI ID</label>
+                        <input type="text" id="admin-settings-upi" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">UPI QR Code Image URL</label>
+                        <input type="url" id="admin-settings-qr" required class="w-full bg-gray-700 border border-gray-600 rounded p-2 text-xs">
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 text-xs font-bold py-2 rounded">Save Gateways</button>
+                </form>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Navigation -->
+    <nav id="nav-admin-bar" class="hidden bg-gray-800 fixed bottom-0 left-0 right-0 border-t border-gray-700 z-50">
+        <div class="flex justify-around items-center h-16 text-xs font-medium text-gray-400 max-w-md mx-auto">
+            <button onclick="showPage('page-dashboard')" id="nav-admin-btn-dash" class="flex flex-col items-center w-full">
+                <i class="fa-solid fa-chart-line text-xl mb-1"></i><span>Dashboard</span>
+            </button>
+            <button onclick="showPage('page-tournaments')" id="nav-admin-btn-tournaments" class="flex flex-col items-center w-full">
+                <i class="fa-solid fa-gamepad text-xl mb-1"></i><span>Tournaments</span>
+            </button>
+            <button onclick="showPage('page-users')" id="nav-admin-btn-users" class="flex flex-col items-center w-full">
+                <i class="fa-solid fa-users text-xl mb-1"></i><span>Users</span>
+            </button>
+            <button onclick="showPage('page-settings')" id="nav-admin-btn-settings" class="flex flex-col items-center w-full">
+                <i class="fa-solid fa-cog text-xl mb-1"></i><span>Settings</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        const db = {
+            get: (k) => JSON.parse(localStorage.getItem(k)),
+            set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+        };
+
+        let selectedTournamentId = null;
+
+        // Fetch admin info dynamically
+        function loadAdminProfile() {
+            if (!localStorage.getItem("admin_profile")) {
+                localStorage.setItem("admin_profile", JSON.stringify({ username: "Vikash", password: "password123" }));
+            }
+            return db.get("admin_profile");
+        }
+
+        function checkSession() {
+            const admin = loadAdminProfile();
+            document.getElementById("admin-set-username").value = admin.username;
+
+            const session = sessionStorage.getItem("admin_id");
+            if (session) {
+                document.getElementById("admin-badge").innerText = admin.username;
+                document.getElementById("admin-badge").classList.remove("hidden");
+                showPage("page-dashboard");
+            } else {
+                document.getElementById("admin-badge").classList.add("hidden");
+                showPage("page-admin-auth");
+            }
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll(".page-section").forEach(s => s.classList.remove("active"));
+            document.getElementById(pageId).classList.add("active");
+
+            const navBar = document.getElementById("nav-admin-bar");
+            navBar.classList.add("hidden");
+
+            if (pageId.startsWith("page-") && pageId !== "page-admin-auth") {
+                navBar.classList.remove("hidden");
+                updateNavIcons(pageId);
+
+                if (pageId === "page-dashboard") renderDashboard();
+                if (pageId === "page-tournaments") renderAdminTournaments();
+                if (pageId === "page-admin-deposits") renderAdminDeposits();
+                if (pageId === "page-admin-withdrawals") renderAdminWithdrawals();
+                if (pageId === "page-users") renderAdminUsers();
+                if (pageId === "page-settings") renderAdminSettings();
+                if (pageId === "page-match-manage") renderAdminMatchManage();
+            }
+        }
+
+        function updateNavIcons(pageId) {
+            document.getElementById("nav-admin-btn-dash").className = `flex flex-col items-center w-full ${pageId === 'page-dashboard' ? 'text-red-500' : 'text-gray-400'}`;
+            document.getElementById("nav-admin-btn-tournaments").className = `flex flex-col items-center w-full ${pageId === 'page-tournaments' || pageId === 'page-match-manage' ? 'text-red-500' : 'text-gray-400'}`;
+            document.getElementById("nav-admin-btn-users").className = `flex flex-col items-center w-full ${pageId === 'page-users' ? 'text-red-500' : 'text-gray-400'}`;
+            document.getElementById("nav-admin-btn-settings").className = `flex flex-col items-center w-full ${pageId === 'page-settings' ? 'text-red-500' : 'text-gray-400'}`;
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const admin = loadAdminProfile();
+            const user = document.getElementById("admin-username").value.trim();
+            const pass = document.getElementById("admin-password").value;
+
+            if (user === admin.username && pass === admin.password) {
+                sessionStorage.setItem("admin_id", "admin-session-active");
+                document.getElementById("admin-username").value = "";
+                document.getElementById("admin-password").value = "";
+                checkSession();
+            } else {
+                alert("Incorrect username or password.");
+            }
+        }
+
+        function renderDashboard() {
+            const users = db.get("users") || [];
+            const tournaments = db.get("tournaments") || [];
+            const participants = db.get("participants") || [];
+            const deposits = db.get("deposits") || [];
+            const withdrawals = db.get("withdrawals") || [];
+
+            document.getElementById("stat-users").innerText = users.length;
+            document.getElementById("stat-tournaments").innerText = tournaments.length;
+
+            const completed = tournaments.filter(t => t.status === "Completed");
+            const prizeDistributed = completed.reduce((sum, t) => sum + parseFloat(t.prize_pool), 0);
+            document.getElementById("stat-prize").innerText = "₹" + prizeDistributed.toFixed(2);
+
+            let entryFees = 0;
+            participants.forEach(p => {
+                const match = tournaments.find(t => t.id === p.tournament_id);
+                if (match) entryFees += parseFloat(match.entry_fee);
+            });
+            const revenue = entryFees - prizeDistributed;
+            document.getElementById("stat-revenue").innerText = "₹" + revenue.toFixed(2);
+
+            const dBadge = document.getElementById("badge-deposits");
+            const dPending = deposits.filter(x => x.status === "Pending").length;
+            if (dPending > 0) { dBadge.innerText = dPending; dBadge.classList.remove("hidden"); } else { dBadge.classList.add("hidden"); }
+
+            const wBadge = document.getElementById("badge-withdrawals");
+            const wPending = withdrawals.filter(x => x.status === "Pending").length;
+            if (wPending > 0) { wBadge.innerText = wPending; wBadge.classList.remove("hidden"); } else { wBadge.classList.add("hidden"); }
+        }
+
+        function openCreateMatch() { showPage("page-match-create"); }
+
+        function handleCreateTournament(e) {
+            e.preventDefault();
+            const tournaments = db.get("tournaments");
+            tournaments.push({
+                id: Date.now(),
+                title: document.getElementById("create-title").value.trim(),
+                game_name: document.getElementById("create-game").value.trim(),
+                entry_fee: parseFloat(document.getElementById("create-fee").value),
+                prize_pool: parseFloat(document.getElementById("create-prize").value),
+                match_time: document.getElementById("create-time").value,
+                max_participants: parseInt(document.getElementById("create-max").value),
+                room_id: "",
+                room_password: "",
+                status: "Upcoming",
+                winner_id: null
+            });
+            db.set("tournaments", tournaments);
+            alert("Match published!");
+            showPage("page-tournaments");
+        }
+
+        function renderAdminTournaments() {
+            const tournaments = db.get("tournaments") || [];
+            const participants = db.get("participants") || [];
+            const container = document.getElementById("admin-tournaments-grid");
+            container.innerHTML = "";
+
+            tournaments.forEach(t => {
+                const joined = participants.filter(p => p.tournament_id === t.id).length;
+                container.innerHTML += `
+                    <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                        <div class="flex justify-between items-start mb-2">
+                            <div><h4 class="font-bold text-sm">${t.title}</h4><p class="text-[10px] text-gray-400">${t.game_name} • ${new Date(t.match_time).toLocaleString()}</p></div>
+                            <span class="text-[9px] px-2 py-0.5 rounded font-bold bg-blue-500">${t.status}</span>
+                        </div>
+                        <div class="flex justify-between text-xs mt-2 mb-2"><span>Entry: ₹${t.entry_fee}</span><span class="text-green-400 font-bold">Prize: ₹${t.prize_pool}</span></div>
+                        <div class="text-[10px] text-gray-400 mb-3 bg-gray-900 p-2 rounded text-center">Slots Filled: ${joined} / ${t.max_participants}</div>
+                        <button onclick="openManageMatch(${t.id})" class="w-full text-center bg-gray-700 hover:bg-gray-600 text-white font-semibold py-1.5 rounded text-xs transition border border-gray-600">Manage Details</button>
+                    </div>
+                `;
+            });
+        }
+
+        function openManageMatch(id) {
+            selectedTournamentId = id;
+            showPage("page-match-manage");
+        }
+
+        function renderAdminMatchManage() {
+            const t = db.get("tournaments").find(x => x.id === selectedTournamentId);
+            document.getElementById("manage-t-title").innerText = t.title;
+            document.getElementById("manage-t-status").innerText = t.status;
+            document.getElementById("manage-room-id").value = t.room_id || "";
+            document.getElementById("manage-room-pass").value = t.room_password || "";
+
+            const select = document.getElementById("manage-winner-select");
+            select.innerHTML = '<option value="">Select Winner</option>';
+
+            const participants = db.get("participants").filter(p => p.tournament_id === selectedTournamentId);
+            const users = db.get("users");
+            participants.forEach(p => {
+                const u = users.find(x => x.id === p.user_id);
+                if (u) select.innerHTML += `<option value="${u.id}">${u.username}</option>`;
+            });
+        }
+
+        function handleUpdateRoom(e) {
+            e.preventDefault();
+            const tournaments = db.get("tournaments");
+            const idx = tournaments.findIndex(x => x.id === selectedTournamentId);
+            tournaments[idx].room_id = document.getElementById("manage-room-id").value.trim();
+            tournaments[idx].room_password = document.getElementById("manage-room-pass").value.trim();
+            tournaments[idx].status = "Live";
+            db.set("tournaments", tournaments);
+            alert("Match details updated to Live status.");
+            renderAdminMatchManage();
+        }
+
+        function handleDeclareWinner(e) {
+            e.preventDefault();
+            const winnerId = parseInt(document.getElementById("manage-winner-select").value);
+            if (!winnerId) return;
+
+            const tournaments = db.get("tournaments");
+            const tIdx = tournaments.findIndex(x => x.id === selectedTournamentId);
+            const t = tournaments[tIdx];
+
+            t.status = "Completed";
+            t.winner_id = winnerId;
+            db.set("tournaments", tournaments);
+
+            const users = db.get("users");
+            const uIdx = users.findIndex(u => u.id === winnerId);
+            users[uIdx].wallet_balance += parseFloat(t.prize_pool);
+            db.set("users", users);
+
+            const txs = db.get("transactions");
+            txs.push({ id: Date.now(), user_id: winnerId, amount: t.prize_pool, type: "credit", description: `Won Tournament #${t.id}`, created_at: new Date().toISOString() });
+            db.set("transactions", txs);
+
+            alert("Winner paid. Tournament Completed!");
+            showPage("page-tournaments");
+        }
+
+        function renderAdminDeposits() {
+            const deposits = db.get("deposits") || [];
+            const users = db.get("users") || [];
+            const container = document.getElementById("admin-deposits-list");
+            container.innerHTML = "";
+
+            deposits.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).forEach(d => {
+                const u = users.find(x => x.id === d.user_id) || { username: "Unknown" };
+                const isPending = d.status === "Pending";
+                container.innerHTML += `
+                    <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                        <div class="flex justify-between items-center mb-2">
+                            <div><h4 class="font-bold text-sm">${u.username}</h4><p class="text-[9px] text-gray-400">${new Date(d.created_at).toLocaleString()}</p></div>
+                            <span class="text-[9px] px-2 py-0.5 rounded font-bold ${d.status === 'Completed' ? 'bg-green-500' : 'bg-yellow-500'}">${d.status}</span>
+                        </div>
+                        <div class="bg-gray-900 p-3 rounded mb-3 text-xs">
+                            <div>Amount: <span class="font-bold text-green-400">₹${d.amount}</span></div>
+                            <div class="mt-1">UTR Reference: <span class="font-bold text-yellow-400 select-all">${d.transaction_id}</span></div>
+                        </div>
+                        ${isPending ? `
+                            <div class="flex space-x-2">
+                                <button onclick="resolveDeposit(${d.id}, 'Completed')" class="flex-1 bg-green-600 text-xs font-bold py-1.5 rounded">Approve</button>
+                                <button onclick="resolveDeposit(${d.id}, 'Rejected')" class="flex-1 bg-red-600 text-xs font-bold py-1.5 rounded">Reject</button>
+                            </div>
+                        ` : ""}
+                    </div>
+                `;
+            });
+        }
+
+        function resolveDeposit(id, status) {
+            const deposits = db.get("deposits");
+            const dIdx = deposits.findIndex(x => x.id === id);
+            const deposit = deposits[dIdx];
+            deposit.status = status;
+            db.set("deposits", deposits);
+
+            if (status === "Completed") {
+                const users = db.get("users");
+                const uIdx = users.findIndex(u => u.id === deposit.user_id);
+                users[uIdx].wallet_balance += parseFloat(deposit.amount);
+                db.set("users", users);
+
+                const txs = db.get("transactions");
+                txs.push({ id: Date.now(), user_id: deposit.user_id, amount: deposit.amount, type: "credit", description: "Deposit Approved", created_at: new Date().toISOString() });
+                db.set("transactions", txs);
+            }
+            renderAdminDeposits();
+        }
+
+        function renderAdminWithdrawals() {
+            const withdrawals = db.get("withdrawals") || [];
+            const users = db.get("users") || [];
+            const container = document.getElementById("admin-withdrawals-list");
+            container.innerHTML = "";
+
+            withdrawals.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).forEach(w => {
+                const u = users.find(x => x.id === w.user_id) || { username: "Unknown", upi_id: "---" };
+                const isPending = w.status === "Pending";
+                container.innerHTML += `
+                    <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                        <div class="flex justify-between items-center mb-2">
+                            <div><h4 class="font-bold text-sm">${u.username}</h4><p class="text-[9px] text-gray-400">${new Date(w.created_at).toLocaleString()}</p></div>
+                            <span class="text-[9px] px-2 py-0.5 rounded font-bold ${w.status === 'Completed' ? 'bg-green-500' : 'bg-yellow-500'}">${w.status}</span>
+                        </div>
+                        <div class="bg-gray-900 p-3 rounded mb-3 text-xs">
+                            <div>Amount Requested: <span class="font-bold text-red-400">₹${w.amount}</span></div>
+                            <div class="mt-1">UPI ID: <span class="font-bold text-yellow-400 select-all">${u.upi_id}</span></div>
+                        </div>
+                        ${isPending ? `
+                            <div class="flex space-x-2">
+                                <button onclick="resolveWithdrawal(${w.id}, 'Completed')" class="flex-1 bg-blue-600 text-xs font-bold py-1.5 rounded">Complete</button>
+                                <button onclick="resolveWithdrawal(${w.id}, 'Rejected')" class="flex-1 bg-red-600 text-xs font-bold py-1.5 rounded">Reject (Refund)</button>
+                            </div>
+                        ` : ""}
+                    </div>
+                `;
+            });
+        }
+
+        function resolveWithdrawal(id, status) {
+            const withdrawals = db.get("withdrawals");
+            const wIdx = withdrawals.findIndex(x => x.id === id);
+            const w = withdrawals[wIdx];
+            w.status = status;
+            db.set("withdrawals", withdrawals);
+
+            const txs = db.get("transactions");
+            if (status === "Completed") {
+                const matchedTx = txs.find(t => t.user_id === w.user_id && t.amount === w.amount && t.description === "Withdrawal Request (Pending)");
+                if (matchedTx) matchedTx.description = "Withdrawal Completed";
+                db.set("transactions", txs);
+            } else if (status === "Rejected") {
+                const users = db.get("users");
+                const uIdx = users.findIndex(u => u.id === w.user_id);
+                users[uIdx].wallet_balance += parseFloat(w.amount);
+                db.set("users", users);
+
+                const matchedTx = txs.find(t => t.user_id === w.user_id && t.amount === w.amount && t.description === "Withdrawal Request (Pending)");
+                if (matchedTx) matchedTx.description = "Withdrawal Rejected";
+
+                txs.push({ id: Date.now(), user_id: w.user_id, amount: w.amount, type: "credit", description: "Withdrawal Refund", created_at: new Date().toISOString() });
+                db.set("transactions", txs);
+            }
+            renderAdminWithdrawals();
+        }
+
+        function renderAdminUsers() {
+            const users = db.get("users") || [];
+            const container = document.getElementById("admin-users-list");
+            container.innerHTML = "";
+
+            users.forEach(u => {
+                const blocked = u.status === "Blocked";
+                container.innerHTML += `
+                    <div class="bg-gray-800 p-4 rounded-xl border ${blocked ? 'border-red-900 opacity-70' : 'border-gray-700'}">
+                        <div class="flex justify-between items-start mb-3">
+                            <div><h4 class="font-bold">${u.username}</h4><p class="text-xs text-gray-400">${u.email}</p></div>
+                            <span class="text-yellow-400 font-bold text-sm">₹${u.wallet_balance}</span>
+                        </div>
+                        <div class="flex justify-end border-t border-gray-700 pt-2">
+                            <button onclick="toggleUserBlock(${u.id}, '${blocked ? 'Active' : 'Blocked'}')" class="text-xs font-bold py-1 px-3 rounded ${blocked ? 'bg-green-600' : 'bg-red-600'}">
+                                ${blocked ? "Unblock User" : "Block User"}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleUserBlock(id, status) {
+            const users = db.get("users");
+            const idx = users.findIndex(u => u.id === id);
+            users[idx].status = status;
+            db.set("users", users);
+            renderAdminUsers();
+        }
+
+        function renderAdminSettings() {
+            const settings = db.get("app_settings");
+            document.getElementById("admin-settings-upi").value = settings.admin_upi;
+            document.getElementById("admin-settings-qr").value = settings.qr_code;
+        }
+
+        function handleSaveAdminAccount(e) {
+            e.preventDefault();
+            const username = document.getElementById("admin-set-username").value.trim();
+            const pass = document.getElementById("admin-set-password").value;
+
+            const admin = loadAdminProfile();
+            admin.username = username;
+            if (pass) admin.password = pass;
+
+            db.set("admin_profile", admin);
+            document.getElementById("admin-badge").innerText = username;
+            document.getElementById("admin-set-password").value = "";
+            alert("Settings updated successfully!");
+        }
+
+        function handleSaveGateway(e) {
+            e.preventDefault();
+            const admin_upi = document.getElementById("admin-settings-upi").value.trim();
+            const qr_code = document.getElementById("admin-settings-qr").value.trim();
+            db.set("app_settings", { admin_upi, qr_code });
+            alert("Gateways configuration saved.");
+        }
+
+        function logoutAdmin() {
+            sessionStorage.removeItem("admin_id");
+            checkSession();
+        }
+
+        window.onload = checkSession;
+    </script>
+</body>
+</html>
